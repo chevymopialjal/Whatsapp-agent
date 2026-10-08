@@ -1,0 +1,539 @@
+{
+  "name": "Kommo y N8N - WA",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.text }}",
+        "options": {
+          "systemMessage": "=You are helpful assistant"
+        }
+      },
+      "id": "742de465-8511-4a63-929f-2c51e4a10090",
+      "name": "ai",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.6,
+      "position": [
+        784,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o-2024-11-20",
+        "options": {
+          "temperature": 0.6
+        }
+      },
+      "id": "ae3d4698-ed55-4812-8a5d-5c7d9b723771",
+      "name": "model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.1,
+      "position": [
+        752,
+        288
+      ]
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('new_message').item.json.body[\"message[add][0][chat_id]\"] }}",
+        "contextWindowLength": 20
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        864,
+        288
+      ],
+      "id": "0131cb4e-aa57-4a71-ab7c-e233af4c51d7",
+      "name": "memory"
+    },
+    {
+      "parameters": {
+        "content": "### Traducción de voz a texto",
+        "height": 200,
+        "width": 580,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        0,
+        0
+      ],
+      "typeVersion": 1,
+      "id": "ca622ce9-bae9-43e4-87ab-1b4a4968b6a7",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b7aef447-b01e-41b3-948d-e222ef60c3d4",
+              "name": "text",
+              "value": "={{ $json.text || $('new_message').item.json.body[\"message[add][0][text]\"] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "5a3247fa-ce86-4f53-944a-2599f2ceb13c",
+      "name": "setText",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        624,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('new_message').item.json.body[\"account[_links][self]\"] }}/ajax/v1/chats/session",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Requested-With",
+              "value": "XMLHttpRequest"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "request[chats][session][action]",
+              "value": "create"
+            }
+          ]
+        },
+        "options": {
+          "redirect": {
+            "redirect": {}
+          }
+        }
+      },
+      "id": "ff761a41-aca7-4c22-b887-6689501f2068",
+      "name": "Get token",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1120,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### Respuesta",
+        "height": 200,
+        "width": 360,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1088,
+        32
+      ],
+      "typeVersion": 1,
+      "id": "fde86651-2b83-4c8a-aafa-aaf0027caa06",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "7af00909-e493-4c66-b1f7-bb955f27943c",
+        "options": {}
+      },
+      "id": "7f1369b3-bd04-4181-9316-802fb647ad9a",
+      "name": "new_message",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -800,
+        64
+      ],
+      "webhookId": "7af00909-e493-4c66-b1f7-bb955f27943c"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.body[\"account[_links][self]\"] }}/api/v4/{{ $json.body[\"message[add][0][entity_type]\"] }}s/{{ $json.body[\"message[add][0][entity_id]\"] }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ba209243-6198-449e-afb2-728e04e26278",
+      "name": "Credenciales_Kommo",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -448,
+        64
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.data.parseJson()._embedded.tags.some(t => t.name === 'stop_ai') }}",
+                    "rightValue": 62821670,
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "false",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "no stop_ai tag"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        -208,
+        64
+      ],
+      "id": "3ee7f51d-a41b-41f8-8ea6-024632499d28",
+      "name": "Parar la IA"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "67b91075-5506-4080-b0ab-8b2712d3e394",
+              "leftValue": "={{ $('new_message').item.json.body[\"message[add][0][attachment][type]\"] }}",
+              "rightValue": "=voice",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            },
+            {
+              "id": "9d24d05b-5d53-40a6-b9c1-981d399c3e90",
+              "leftValue": "={{ !!$('new_message').item.json.body[\"message[add][0][attachment][link]\"] }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "2e2aba3c-1b8c-41ec-9264-3e12f5413248",
+      "name": "¿Es Voz?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        48,
+        64
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $('new_message').item.json.body[\"message[add][0][attachment][link]\"] }}",
+        "options": {}
+      },
+      "id": "bdc3fc9c-0671-421c-8de8-9a1d9d82adb0",
+      "name": "Extrae Voz",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        -32
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "audio",
+        "operation": "transcribe",
+        "options": {}
+      },
+      "id": "e478e3ba-d8a2-4d14-bf8d-e0e558f879c1",
+      "name": "Mensaje a txt",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        416,
+        -32
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://amojo.kommo.com/v1/chats/{{ $json.response.chats.session.account.id }}/{{ $('new_message').item.json.body['message[add][0][chat_id]'] }}/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Requested-With",
+              "value": "XMLHttpRequest"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/x-www-form-urlencoded"
+            },
+            {
+              "name": "X-Auth-Token",
+              "value": "={{ $json.response.chats.session.access_token }}"
+            },
+            {
+              "name": "chatId",
+              "value": "={{ $('new_message').item.json.body['message[add][0][chat_id]'] }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "silent",
+              "value": "false"
+            },
+            {
+              "name": "priority",
+              "value": "low"
+            },
+            {
+              "name": "crm_entity[id]",
+              "value": "={{ $('new_message').item.json.body['message[add][0][entity_id]'] }}"
+            },
+            {
+              "name": "crm_entity[type]",
+              "value": "={{ $('new_message').item.json.body['message[add][0][element_type]'] }}"
+            },
+            {
+              "name": "persona_name",
+              "value": "={{ $json.response.chats.session.user.name }}"
+            },
+            {
+              "name": "persona_avatar",
+              "value": "={{ $json.response.chats.session.user.avatar }}"
+            },
+            {
+              "name": "text",
+              "value": "={{ $('ai').item.json.output }}"
+            },
+            {
+              "name": "recipient_id",
+              "value": "={{ $('new_message').item.json.body['message[add][0][author][id]'] }}"
+            },
+            {
+              "name": "group_id"
+            },
+            {
+              "name": "crm_dialog_id",
+              "value": "={{ $('new_message').item.json.body['message[add][0][talk_id]'] }}"
+            },
+            {
+              "name": "crm_contact_id",
+              "value": "={{ $('new_message').item.json.body['message[add][0][contact_id]'] }}"
+            },
+            {
+              "name": "crm_account_id",
+              "value": "={{ $('new_message').item.json.body['account[id]'] }}"
+            },
+            {
+              "name": "skip_link_shortener",
+              "value": "false"
+            }
+          ]
+        },
+        "options": {
+          "redirect": {
+            "redirect": {}
+          }
+        }
+      },
+      "id": "d6eb9863-b457-4d5e-9966-868dc9f57ad9",
+      "name": "Enviar el mensaje",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1280,
+        80
+      ]
+    }
+  ],
+  "connections": {
+    "ai": {
+      "main": [
+        [
+          {
+            "node": "Get token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "ai",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "ai",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "setText": {
+      "main": [
+        [
+          {
+            "node": "ai",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get token": {
+      "main": [
+        [
+          {
+            "node": "Enviar el mensaje",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "new_message": {
+      "main": [
+        [
+          {
+            "node": "Credenciales_Kommo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Credenciales_Kommo": {
+      "main": [
+        [
+          {
+            "node": "Parar la IA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parar la IA": {
+      "main": [
+        [
+          {
+            "node": "¿Es Voz?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Es Voz?": {
+      "main": [
+        [
+          {
+            "node": "Extrae Voz",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "setText",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extrae Voz": {
+      "main": [
+        [
+          {
+            "node": "Mensaje a txt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mensaje a txt": {
+      "main": [
+        [
+          {
+            "node": "setText",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "pinData": {},
+  "triggerCount": 0,
+  "meta": null
+}
